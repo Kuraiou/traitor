@@ -1,8 +1,8 @@
 Gem::Specification.new do |s|
   s.name = 'traitor'
   s.version = '0.0.1'
-  s.summary = 'traitor provides a lightweight wrapper to group attributes as traits'
-  s.description = 'a lightweight, simplified, DSL-less version of factory girl.'
+  s.summary = 'a lightweight way to bind groups of attributes to a trait.'
+  s.description = 'a lightweight, simplified, pure-ruby way to handle object model construction, similar to FactoryGirl.'
   s.authors = ['Zach Lome']
   s.email = ['zslome@gmail.com']
   s.homepage = 'https://github.com/kuraiou/traitor'
