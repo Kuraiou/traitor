@@ -1,3 +1,3 @@
-class Traitor
+module Traitor
   class Error < StandardError; end
 end

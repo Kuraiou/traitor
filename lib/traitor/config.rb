@@ -1,4 +1,4 @@
-class Traitor
+module Traitor
   class Config
     def self.configure_for_rails!
       Traitor.instance_variable_set(:@save_method, :save)

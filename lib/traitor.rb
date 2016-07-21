@@ -1,7 +1,8 @@
 require 'traitor/config'
+require 'traitor/find_definitions'
 require 'traitor/error'
 
-class Traitor
+module Traitor
   @trait_library = {}
   @class_cache = {}
   @trait_cache = {}
