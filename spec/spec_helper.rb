@@ -20,7 +20,8 @@ end
 
 class TestClass
   attr_accessor :param1, :param2
-  def initialize(attrs = {}, **kwargs)
+  def initialize(*args, **kwargs)
+    attrs = args[0] || kwargs
     @param1 = attrs[:param1]
     @param2 = attrs[:param2]
   end

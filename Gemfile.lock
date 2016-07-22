@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    traitor (0.0.1)
+    traitr (0.0.1)
 
 GEM
   remote: https://rubygems.org/
@@ -43,7 +43,7 @@ DEPENDENCIES
   rspec
   rspec-its
   timecop
-  traitor!
+  traitr!
 
 BUNDLED WITH
    1.11.2

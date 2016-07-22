@@ -36,7 +36,7 @@ RSpec.describe Traitor do
     end
 
     context 'with a configured save method' do
-      before { Traitor.save_method = :create }
+      before { Traitor::Config.save_method = :create }
 
       it 'will call the save method after building the object' do
         expect_any_instance_of(TestClass).to receive(:create)

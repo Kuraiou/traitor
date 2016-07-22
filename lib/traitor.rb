@@ -5,30 +5,20 @@ require 'traitor/error'
 module Traitor
   @trait_library = {}
   @block_library = {}
-
-  @save_method = nil
-  @save_kwargs = {}
-  @build_kwargs = {}
-
   @class_cache = {}
   @trait_cache = {}
-
-  class << self
-    attr_writer :save_method, :save_kwargs, :build_kwargs
-  end
+  @config = Traitor::Config
 
   def self.reset!
     @trait_library = {}
+    @block_library = {}
     @class_cache = {}
     @trait_cache = {}
   end
 
   def self.define(klass, **traits, &block)
-    if @trait_library.include? klass
-      @trait_library[klass].merge!(traits)
-    else
-      @trait_library[klass] = traits
-    end
+    @trait_library[klass] ||= {}
+    @trait_library[klass].merge!(traits)
     @block_library[klass] = block if block_given?
   end
 
@@ -37,9 +27,14 @@ module Traitor
   # and then save it.
   ##
   def self.create(klass, *traits, **attributes, &block)
-    raise Traitor::Error.new("Cannot call Traitor.create until you have configured Traitor.save_method!") unless @save_method
+    save_method = @config.save_method
+    raise Traitor::Error.new("Cannot call Traitor.create until you have configured Traitor.save_method .") unless save_method
     record = build(klass, *traits, **attributes, &block)
-    record.public_send(@save_method, **@save_kwargs)
+    if (save_kwargs = @config.save_kwargs).any? # assignment intentional
+      record.public_send(save_method, **save_kwargs)
+    else
+      record.public_send(save_method)
+    end
     yield(record, at: :create) if block_given?
     run_class_block(klass, record, :build)
     record
@@ -50,7 +45,11 @@ module Traitor
   ##
   def self.build(klass, *traits, **attributes, &block)
     attributes = get_attributes_from_traits(klass, traits).merge(attributes)
-    record = convert_to_class(klass).new(attributes, **@build_kwargs)
+    record = if (build_kwargs = @config.build_kwargs).any? # assignment intentional
+      convert_to_class(klass).new(attributes, **build_kwargs)
+    else
+      convert_to_class(klass).new(attributes)
+    end
     yield(record, at: :build) if block_given?
     run_class_block(klass, record, :build)
     record
