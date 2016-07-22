@@ -7,7 +7,6 @@ module Traitor
   @block_library = {}
   @class_cache = {}
   @trait_cache = {}
-  @config = Traitor::Config
 
   def self.reset!
     @trait_library = {}
@@ -27,16 +26,21 @@ module Traitor
   # and then save it.
   ##
   def self.create(klass, *traits, **attributes, &block)
-    save_method = @config.save_method
+    save_method = Traitor::Config.save_method
     raise Traitor::Error.new("Cannot call Traitor.create until you have configured Traitor.save_method .") unless save_method
-    record = build(klass, *traits, **attributes, &block)
-    if (save_kwargs = @config.save_kwargs).any? # assignment intentional
+
+    @after_create_block = nil
+    record = build(klass, *traits, **attributes) # note we don't pass block here.
+
+    if (save_kwargs = Traitor::Config.save_kwargs).any? # assignment intentional
       record.public_send(save_method, **save_kwargs)
     else
       record.public_send(save_method)
     end
-    yield(record, at: :create) if block_given?
-    run_class_block(klass, record, :build)
+
+    blocks = [@after_create_block, (block_given? ? block : nil)].compact
+    blocks.each { |blk| blk.call(record) }
+
     record
   end
 
@@ -45,23 +49,21 @@ module Traitor
   ##
   def self.build(klass, *traits, **attributes, &block)
     attributes = get_attributes_from_traits(klass, traits).merge(attributes)
-    record = if (build_kwargs = @config.build_kwargs).any? # assignment intentional
+    after_build_block = attributes.delete :after_build
+    @after_create_block = attributes.delete :after_create # we need attr assignment to bubble the block up
+
+    record = if (build_kwargs = Traitor::Config.build_kwargs).any? # assignment intentional
       convert_to_class(klass).new(attributes, **build_kwargs)
     else
       convert_to_class(klass).new(attributes)
     end
-    yield(record, at: :build) if block_given?
-    run_class_block(klass, record, :build)
+
+    blocks = [@block_library[klass], after_build_block, (block_given? ? block : nil)].compact
+    blocks.each { |blk| blk.call(record) }
     record
   end
 
   # private methods
-
-  def self.run_class_block(klass, record, at)
-    class_block = @block_library[klass]
-    class_block.call(record, at: at) if class_block
-  end
-  private_class_method :run_class_block
 
   def self.convert_to_class(klass)
     @class_cache[klass] ||= Object.const_get(camelize(klass))
@@ -84,7 +86,7 @@ module Traitor
     # use late resolution on lambda values by calling them here as part of constructing a new hash
     Hash[
       @trait_cache[cache_key].map do |attribute, value|
-        [attribute, value.is_a?(Proc) ? value.call : value]
+        [attribute, value.is_a?(Proc) && ![:after_build, :after_create].include?(attribute) ? value.call : value]
       end
     ]
   end

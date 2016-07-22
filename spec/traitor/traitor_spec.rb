@@ -95,4 +95,42 @@ RSpec.describe Traitor do
       end
     end
   end
+
+  describe 'calling blocks' do
+    let(:tracker) { {
+      class_called_at: nil,
+      build_called_at: nil,
+      create_called_at: nil,
+      row_called_at: nil,
+    } }
+
+    before do
+      Traitor::Config.save_method = :create
+      Traitor.define(:test_class, {
+        trait1: {
+          after_build: ->(record) do
+            tracker[:build_called_at] = DateTime.now
+            sleep 0.001
+          end,
+          after_create: ->(record) do
+            tracker[:create_called_at] = DateTime.now
+            sleep 0.001
+          end
+        }
+      }) do |record|
+        tracker[:class_called_at] = DateTime.now
+        sleep(0.001)
+      end
+    end
+
+    it 'calls all blocks in least-to-most-specific order' do
+      Traitor.create(:test_class, :trait1) do |record|
+        tracker[:row_called_at] = DateTime.now
+      end
+
+      expect(tracker[:row_called_at]).to be > tracker[:create_called_at]
+      expect(tracker[:create_called_at]).to be > tracker[:build_called_at]
+      expect(tracker[:build_called_at]).to be > tracker[:class_called_at]
+    end
+  end
 end
