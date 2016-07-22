@@ -1,7 +1,7 @@
-# from FactoryGirl as of 2016-07-21
-# https://github.com/thoughtbot/factory_girl/blob/e84bfeba9b9859ebf0884c0c47f84dd7ded381e1/lib/factory_girl/find_definitions.rb
-# all credit to them
-module Traitor 
+# pulled from https://github.com/thoughtbot/factory_girl/blob/e84bfeba9b9859ebf0884c0c47f84dd7ded381e1/lib/factory_girl/find_definitions.rb
+# as of 2016-07-21
+# all credit reserved
+module Traitor
   class << self
     # An Array of strings specifying locations that should be searched for
     # factory definitions. By default, traitor will attempt to require

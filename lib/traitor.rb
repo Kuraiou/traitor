@@ -4,12 +4,14 @@ require 'traitor/error'
 
 module Traitor
   @trait_library = {}
-  @class_cache = {}
-  @trait_cache = {}
+  @block_library = {}
 
   @save_method = nil
   @save_kwargs = {}
   @build_kwargs = {}
+
+  @class_cache = {}
+  @trait_cache = {}
 
   class << self
     attr_writer :save_method, :save_kwargs, :build_kwargs
@@ -21,8 +23,13 @@ module Traitor
     @trait_cache = {}
   end
 
-  def self.define(klass, **traits)
-    @trait_library[klass] = traits
+  def self.define(klass, **traits, &block)
+    if @trait_library.include? klass
+      @trait_library[klass].merge!(traits)
+    else
+      @trait_library[klass] = traits
+    end
+    @block_library[klass] = block if block_given?
   end
 
   ##
@@ -33,7 +40,8 @@ module Traitor
     raise Traitor::Error.new("Cannot call Traitor.create until you have configured Traitor.save_method!") unless @save_method
     record = build(klass, *traits, **attributes, &block)
     record.public_send(@save_method, **@save_kwargs)
-    yield(record, post_save: true) if block_given?
+    yield(record, at: :create) if block_given?
+    run_class_block(klass, record, :build)
     record
   end
 
@@ -43,20 +51,27 @@ module Traitor
   def self.build(klass, *traits, **attributes, &block)
     attributes = get_attributes_from_traits(klass, traits).merge(attributes)
     record = convert_to_class(klass).new(attributes, **@build_kwargs)
-    yield(record) if block_given?
+    yield(record, at: :build) if block_given?
+    run_class_block(klass, record, :build)
     record
   end
 
   # private methods
 
+  def self.run_class_block(klass, record, at)
+    class_block = @block_library[klass]
+    class_block.call(record, at: at) if class_block
+  end
+  private_class_method :run_class_block
+
   def self.convert_to_class(klass)
     @class_cache[klass] ||= Object.const_get(camelize(klass))
-  rescue NameError => e
+  rescue NameError
     raise Traitor::Error.new("Tried to create a #{camelize(klass)}, but it does not exist!")
   end
   private_class_method :convert_to_class
 
-  def self.get_attributes_from_traits(klass, *traits)
+  def self.get_attributes_from_traits(klass, traits)
     # we only call this method when the klass has been converted to a key inside create
     return {} unless library = @trait_library[klass]
 
@@ -85,4 +100,3 @@ module Traitor
   end
   private_class_method :camelize
 end
-
