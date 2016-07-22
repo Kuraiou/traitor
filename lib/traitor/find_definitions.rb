@@ -1,6 +1,6 @@
-# pulled from https://github.com/thoughtbot/factory_girl/blob/e84bfeba9b9859ebf0884c0c47f84dd7ded381e1/lib/factory_girl/find_definitions.rb
+# based on https://github.com/thoughtbot/factory_girl/blob/master/lib/factory_girl/find_definitions.rb
 # as of 2016-07-21
-# all credit reserved
+# Copyright (c) 2008-2016 Joe Ferris and thoughtbot, inc. MIT License
 module Traitor
   class << self
     # An Array of strings specifying locations that should be searched for

@@ -1,5 +1,6 @@
-# pulled from https://github.com/thoughtbot/traitor_girl/blob/master/spec/traitor_girl/find_definitions_spec.rb
-# on 2016-07-22
+# based on https://github.com/thoughtbot/traitor_girl/blob/master/spec/traitor_girl/find_definitions_spec.rb
+# as of 2016-07-22
+# Copyright (c) 2008-2016 Joe Ferris and thoughtbot, inc. MIT License
 require 'spec_helper'
 
 shared_examples_for "finds definitions" do
