@@ -93,7 +93,7 @@ module Traitor
 
   def self.camelize(term)
     string = term.to_s
-    string = string.sub(/^[a-z\d]*/) { |match| match.capitalize }
+    string[0] = string[0].upcase
     string.gsub!(/(?:_|(\/))([a-z\d]*)/i) { "#{$1}#{$2.capitalize}" }
     string.gsub!('/'.freeze, '::'.freeze)
     string
