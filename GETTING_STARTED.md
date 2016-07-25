@@ -16,12 +16,22 @@ Traitor.define :user,
     admin: false
   },
   with_uuid: {
-    uuid: ->{ SecureRandom.uuid }
+    uuid: ->{ SecureRandom.uuid } # this value is calculated at build/create time, not definition time.
   }
 end
 ```
 
-It is highly recommended that you have one traitor for each class that provides the simplest set of attributes necessary to create an instance of that class. If you're creating ActiveRecord objects, that means that you should only provide attributes that are required through validations and that do not have defaults. Other traitors can be created through inheritance to cover common scenarios for each class.
+**Note**: Default attribuets to be assigned must be underneath the `:default_traits` trait ey. This is a
+special key that is always the first to be merged into the list of attributes.
+
+**Note**: Use lambdas without arguments (e.g. `->{ }`) to define a value that should be calculated at
+construction time instead of definition time.
+
+It is highly recommended that you have one traitor for each class that provides the simplest 
+set of attributes necessary to create an instance of that class. If you're creating ActiveRecord 
+objects, that means that you should only provide attributes that are required through validations
+and that do not have defaults. Other traitors can be created through inheritance to cover common
+scenarios for each class.
 
 Attempting to define multiple traitors with the same name will raise an error.
 
@@ -34,3 +44,59 @@ following locations:
     test/traitors/*.rb
     spec/traitors/*.rb
 
+Blocks/Triggers
+---------------
+
+Similar to FactoryGirl, a trait can define triggers to occur after build or create, but before the 
+record is handed off to the system. This is done by specifying a key of `:after_build` or
+`:after_create` in your traitor definition, whose value must be a callable `Proc` or `Lambda`, with
+a single parameter that represents the constructed object. `:after_build` occurs when both building
+and creating, after the build has completed; `:after_create` occurs after the build AND the create's
+save method have been called.
+
+E.G.:
+
+```ruby
+Traitor.define :user,
+  post_save_update: {
+    after_create: ->(record) {
+      puts "this occurs after the record has been saved, being created with this trait!"
+      record.stubber = true
+    },
+  after_build: ->(record) {
+    puts "this occurs every time a User is built, no matter what!"
+    record.foo = :bar
+  }
+```
+
+Note that these build/create triggers are *not* put in the `:default_traits` key.
+
+Initializing Traitor
+--------------------
+
+**Note**: this document assumes you are using *Rspec* and Rails/ActiveRecord.
+
+In your `spec_helper.rb`, add:
+
+```ruby
+require 'traitor'
+Traitor.find_definitions # automatically load traitor definitions
+Traitor::Config.configure_for_rails! # set up for ActiveRecord
+```
+
+The above configuration method will build objects passing in `without_protection: true`, will
+save objects that are created with `create` by calling `object.save`, and will pass in 
+`validate: false` to the save method.
+
+If you would prefer to keep validation intact, use `Traitor::Config.configure_safe_for_rails!`
+instead.
+
+Using Traitors
+--------------
+
+Simply use `Traitor.build` or `Traitor.create` to use your defined traitors. `build` will
+just construct the object; `create` will, after building the object, call the save method
+defined by `Traitor::Config.save_method` to save the object.
+
+It is highly recommended that you prefer `build` whenever possible to avoid unnecessary
+database usage.
