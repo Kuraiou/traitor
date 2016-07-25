@@ -11,7 +11,7 @@ module Traitor
       def configure_for_rails!
         @save_method  = :save
         @save_kwargs  = { validate: false }
-        @build_kwargs = { without_validation: true }
+        @build_kwargs = { without_protection: true }
         @build_with_list = false
       end
 
