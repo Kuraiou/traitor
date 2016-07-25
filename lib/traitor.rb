@@ -63,8 +63,11 @@ module Traitor
   ##
   def self.build(klass, *traits, **attributes)
     attributes = get_attributes_from_traits(klass, traits).merge(attributes)
+    build_kwargs = Traitor::Config.build_kwargs
 
-    record = if (build_kwargs = Traitor::Config.build_kwargs).any? # assignment intentional
+    record = if Traitor::Config.build_with_list
+      convert_to_class(klass).new(**attributes.merge(build_kwargs))
+    elsif build_kwargs.any?
       convert_to_class(klass).new(attributes, **build_kwargs)
     else
       convert_to_class(klass).new(attributes)
