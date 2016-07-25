@@ -3,6 +3,8 @@ require 'traitor/find_definitions'
 require 'traitor/error'
 
 module Traitor
+  BLOCK_KEYS = [:after_build, :after_create]
+
   @trait_library = {}
   @block_library = {}
   @class_cache = {}
@@ -15,22 +17,36 @@ module Traitor
     @trait_cache = {}
   end
 
-  def self.define(klass, **traits, &block)
+  def self.define(klass, **traits)
     @trait_library[klass] ||= {}
+
+    (traits.keys & BLOCK_KEYS).each do |block_type|
+      block = traits.delete block_type
+      @block_library[klass] ||= {class: {}, traits: {}}
+      @block_library[klass][:class][block_type] = block
+    end
+
+    traits.each do |trait, attributes|
+      (attributes.keys & BLOCK_KEYS).each do |block_type|
+        block = attributes.delete block_type
+        @block_library[klass] ||= {class: {}, traits: {}}
+        @block_library[klass][:traits][trait] ||= {}
+        @block_library[klass][:traits][trait][block_type] = block
+      end
+    end
+
     @trait_library[klass].merge!(traits)
-    @block_library[klass] = block if block_given?
   end
 
   ##
   # build an instance of an object using the defined traits and attributes,
   # and then save it.
   ##
-  def self.create(klass, *traits, **attributes, &block)
+  def self.create(klass, *traits, **attributes)
     save_method = Traitor::Config.save_method
     raise Traitor::Error.new("Cannot call Traitor.create until you have configured Traitor.save_method .") unless save_method
 
-    @after_create_block = nil
-    record = build(klass, *traits, **attributes) # note we don't pass block here.
+    record = build(klass, *traits, **attributes)
 
     if (save_kwargs = Traitor::Config.save_kwargs).any? # assignment intentional
       record.public_send(save_method, **save_kwargs)
@@ -38,19 +54,15 @@ module Traitor
       record.public_send(save_method)
     end
 
-    blocks = [@after_create_block, (block_given? ? block : nil)].compact
-    blocks.each { |blk| blk.call(record) }
-
+    call_blocks(klass, :after_create, record, *traits)
     record
   end
 
   ##
   # build an instance of an object using the defined traits and attributes.
   ##
-  def self.build(klass, *traits, **attributes, &block)
+  def self.build(klass, *traits, **attributes)
     attributes = get_attributes_from_traits(klass, traits).merge(attributes)
-    after_build_block = attributes.delete :after_build
-    @after_create_block = attributes.delete :after_create # we need attr assignment to bubble the block up
 
     record = if (build_kwargs = Traitor::Config.build_kwargs).any? # assignment intentional
       convert_to_class(klass).new(attributes, **build_kwargs)
@@ -58,12 +70,24 @@ module Traitor
       convert_to_class(klass).new(attributes)
     end
 
-    blocks = [@block_library[klass], after_build_block, (block_given? ? block : nil)].compact
-    blocks.each { |blk| blk.call(record) }
+    call_blocks(klass, :after_build, record, *traits)
     record
   end
 
   # private methods
+
+  def self.call_blocks(klass, trigger, record, *traits)
+    return unless @block_library[klass]
+    [].tap do |blocks|
+      blocks << @block_library[klass][:class][trigger]
+      traits.each do |trait|
+        if @block_library[klass][:traits][trait]
+          blocks << @block_library[klass][:traits][trait][trigger]
+        end
+      end
+    end.compact.each { |block| block.call(record) }
+  end
+  private_class_method :call_blocks
 
   def self.convert_to_class(klass)
     @class_cache[klass] ||= Object.const_get(camelize(klass))

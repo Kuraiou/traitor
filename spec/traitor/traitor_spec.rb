@@ -98,10 +98,10 @@ RSpec.describe Traitor do
 
   describe 'calling blocks' do
     let(:tracker) { {
-      class_called_at: nil,
-      build_called_at: nil,
-      create_called_at: nil,
-      row_called_at: nil,
+      class_build_called_at: nil,
+      class_create_called_at: nil,
+      trait_build_called_at: nil,
+      trait_create_called_at: nil,
     } }
 
     before do
@@ -109,28 +109,31 @@ RSpec.describe Traitor do
       Traitor.define(:test_class, {
         trait1: {
           after_build: ->(record) do
-            tracker[:build_called_at] = DateTime.now
+            tracker[:trait_build_called_at] = DateTime.now
             sleep 0.001
           end,
           after_create: ->(record) do
-            tracker[:create_called_at] = DateTime.now
+            tracker[:trait_create_called_at] = DateTime.now
             sleep 0.001
           end
-        }
-      }) do |record|
-        tracker[:class_called_at] = DateTime.now
-        sleep(0.001)
-      end
+        },
+        after_build: ->(record) do
+          tracker[:class_build_called_at] = DateTime.now
+          sleep 0.001
+        end,
+        after_create: ->(record) do
+          tracker[:class_create_called_at] = DateTime.now
+          sleep 0.001
+        end
+      })
     end
 
     it 'calls all blocks in least-to-most-specific order' do
-      Traitor.create(:test_class, :trait1) do |record|
-        tracker[:row_called_at] = DateTime.now
-      end
+      Traitor.create(:test_class, :trait1)
 
-      expect(tracker[:row_called_at]).to be > tracker[:create_called_at]
-      expect(tracker[:create_called_at]).to be > tracker[:build_called_at]
-      expect(tracker[:build_called_at]).to be > tracker[:class_called_at]
+      expect(tracker[:trait_create_called_at]).to be > tracker[:class_create_called_at]
+      expect(tracker[:class_create_called_at]).to be > tracker[:trait_build_called_at]
+      expect(tracker[:trait_build_called_at]).to be > tracker[:class_build_called_at]
     end
   end
 end
