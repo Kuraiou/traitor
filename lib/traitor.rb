@@ -43,15 +43,15 @@ module Traitor
   # and then save it.
   ##
   def self.create(klass, *traits, **attributes)
-    save_method = Traitor::Config.save_method
-    raise Traitor::Error.new("Cannot call Traitor.create until you have configured Traitor.save_method .") unless save_method
+    create_method = Traitor::Config.create_method
+    raise Traitor::Error.new("Cannot call Traitor.create until you have configured Traitor.create_method .") unless create_method
 
     record = build(klass, *traits, **attributes)
 
-    if (save_kwargs = Traitor::Config.save_kwargs).any? # assignment intentional
-      record.public_send(save_method, **save_kwargs)
+    if (create_kwargs = Traitor::Config.create_kwargs).any? # assignment intentional
+      record.public_send(create_method, **create_kwargs)
     else
-      record.public_send(save_method)
+      record.public_send(create_method)
     end
 
     call_blocks(klass, :after_create, record, *traits)
@@ -78,17 +78,17 @@ module Traitor
   end
 
   def self.create_using(klass, create_method, *traits, **attributes)
-    old_create_method = Traitor::Config.save_method
-    old_create_kwargs = Traitor::Config.save_kwargs
+    old_create_method = Traitor::Config.create_method
+    old_create_kwargs = Traitor::Config.create_kwargs
 
-    new_create_kwargs = attributes.delete :save_kwargs
-    Traitor::Config.save_method = create_method
-    Traitor::Config.save_kwargs = new_create_kwargs if new_create_kwargs
+    new_create_kwargs = attributes.delete :create_kwargs
+    Traitor::Config.create_method = create_method
+    Traitor::Config.create_kwargs = new_create_kwargs if new_create_kwargs
 
     create(klass, *traits, **attributes)
   ensure
-    Traitor::Config.save_method = old_create_method
-    Traitor::Config.save_kwargs = old_create_kwargs
+    Traitor::Config.create_method = old_create_method
+    Traitor::Config.create_kwargs = old_create_kwargs
   end
 
   # private methods

@@ -25,4 +25,13 @@ To install the gem manually from your shell, run:
 gem install traitr
 ```
 
+Once you've got it installed, in your spec_helper, use
+
+```ruby
+require 'traitor'
+Traitor::Config.configure_for_rails!
+```
+
+or explicitly define `Traitor::Config.create_method`, `Traitor::Config.create_kwargs`, and `Traitor::Config.build_kwargs`.
+
 **WARNING**: This gem is not related to nor compatible with [txus/traitor](https://github.com/txus/traitor), which is `traitor` on rubygems.org

@@ -8,8 +8,8 @@ RSpec.describe Traitor::Config do
   describe '.configure_for_rails!' do
     it 'sets all the required variables' do
       Traitor::Config.configure_for_rails!
-      expect(Traitor::Config.save_method).to eq :save
-      expect(Traitor::Config.save_kwargs).to eq({ validate: false })
+      expect(Traitor::Config.create_method).to eq :save
+      expect(Traitor::Config.create_kwargs).to eq({ validate: false })
       expect(Traitor::Config.build_kwargs).to eq({ without_protection: true })
     end
   end
@@ -17,8 +17,8 @@ RSpec.describe Traitor::Config do
   describe '.configure_safe_for_rails!' do
     it 'sets all the required variables' do
       Traitor::Config.configure_safe_for_rails!
-      expect(Traitor::Config.save_method).to eq :save
-      expect(Traitor::Config.save_kwargs).to eq({})
+      expect(Traitor::Config.create_method).to eq :save
+      expect(Traitor::Config.create_kwargs).to eq({})
       expect(Traitor::Config.build_kwargs).to eq({})
     end
   end

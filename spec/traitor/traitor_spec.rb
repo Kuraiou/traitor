@@ -36,7 +36,7 @@ RSpec.describe Traitor do
     end
 
     context 'with a configured save method' do
-      before { Traitor::Config.save_method = :create }
+      before { Traitor::Config.create_method = :create }
 
       it 'will call the save method after building the object' do
         expect_any_instance_of(TestClass).to receive(:create)
@@ -98,11 +98,11 @@ RSpec.describe Traitor do
 
   describe '#create_using' do
     before { Traitor.define(:test_class, {}) } # assuming an empty
-    before { Traitor::Config.save_method = :create }
-    it 'will use the specified method, but keep the internal save_method' do
+    before { Traitor::Config.create_method = :create }
+    it 'will use the specified method, but keep the internal create_method' do
       expect_any_instance_of(TestClass).to receive(:create_two)
       Traitor.create_using(:test_class, :create_two)
-      expect(Traitor::Config.save_method).to eq :create
+      expect(Traitor::Config.create_method).to eq :create
     end
   end
 
@@ -115,7 +115,7 @@ RSpec.describe Traitor do
     } }
 
     before do
-      Traitor::Config.save_method = :create
+      Traitor::Config.create_method = :create
       Traitor.define(:test_class, {
         trait1: {
           after_build: ->(record) do
