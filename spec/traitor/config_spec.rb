@@ -10,7 +10,7 @@ RSpec.describe Traitor::Config do
       Traitor::Config.configure_for_rails!
       expect(Traitor::Config.save_method).to eq :save
       expect(Traitor::Config.save_kwargs).to eq({ validate: false })
-      expect(Traitor::Config.build_kwargs).to eq({ without_validation: true })
+      expect(Traitor::Config.build_kwargs).to eq({ without_protection: true })
     end
   end
 
