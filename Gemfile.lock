@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    traitr (0.0.2)
+    traitr (0.0.3)
 
 GEM
   remote: https://rubygems.org/
