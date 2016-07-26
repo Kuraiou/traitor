@@ -77,6 +77,20 @@ module Traitor
     record
   end
 
+  def self.create_using(klass, create_method, *traits, **attributes)
+    old_create_method = Traitor::Config.save_method
+    old_create_kwargs = Traitor::Config.save_kwargs
+
+    new_create_kwargs = attributes.delete :save_kwargs
+    Traitor::Config.save_method = create_method
+    Traitor::Config.save_kwargs = new_create_kwargs if new_create_kwargs
+
+    create(klass, *traits, **attributes)
+  ensure
+    Traitor::Config.save_method = old_create_method
+    Traitor::Config.save_kwargs = old_create_kwargs
+  end
+
   # private methods
 
   def self.call_blocks(klass, trigger, record, *traits)

@@ -29,4 +29,8 @@ class TestClass
   def create(*args, **kwargs)
     # nop; for testing purposes only
   end
+
+  def create_two(*args, **kwargs)
+    # nop
+  end
 end

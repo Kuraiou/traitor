@@ -96,6 +96,16 @@ RSpec.describe Traitor do
     end
   end
 
+  describe '#create_using' do
+    before { Traitor.define(:test_class, {}) } # assuming an empty
+    before { Traitor::Config.save_method = :create }
+    it 'will use the specified method, but keep the internal save_method' do
+      expect_any_instance_of(TestClass).to receive(:create_two)
+      Traitor.create_using(:test_class, :create_two)
+      expect(Traitor::Config.save_method).to eq :create
+    end
+  end
+
   describe 'calling blocks' do
     let(:tracker) { {
       class_build_called_at: nil,
