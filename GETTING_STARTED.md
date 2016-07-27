@@ -126,3 +126,48 @@ using a different method just for that particular instance.
 
 It is highly recommended that you prefer `build` whenever possible to avoid unnecessary
 database usage.
+
+Configuring Traitors
+--------------------
+
+The following can be configured:
+
+* `Traitor::Config.build_kwargs` - must be a hash. Keyword arguments to pass as
+  kwargs when calling class.new().
+* `Traitor::Config.build_as_list` - boolean. Defaults to false. If false, new is
+  called using `class.new(attributes, **build_kwargs)`. If true, attributes are
+  also treated as kwargs, and build_kwargs are merged into it.
+* `Traitor::Config.create_method` - The method to call to save the object after
+  building it.
+* `Traitor::Config.create_kwargs` - Must be a hash. Keyword arguments to pass as
+  kwargs when calling the create method.
+* `Traitor::Config.no_callbacks` - boolean. If true, raise an error if any definitions
+  exist with :after_build/:after_create defined.
+
+Helpers
+-------
+
+Traitor::Helpers::ActiveRecord
+==============================
+
+Right now, there is one helper for ActiveRecord, which extends ActiveRecord to add
+a method which is incredibly fast, as it directly executes an insert statement. That
+means there is no validation and no triggers. It is recommended to use this when you
+are testing scopes or other database-based behavior but do not care about particular
+values.
+
+To use it, in your spec_helper.rb, add:
+
+```ruby
+require 'traitor/helpers/active_record'
+Traitor::Config.create_method = :create_without_validations
+# alternatively, define :create_using as :create_without_validations on the traitors you want to
+# use this behavior, or call Traitor.create_using(<:class>, :create_without_validations, *traits, **attributes)
+```
+
+Traitor::Helpers::RSpec
+=======================
+
+In your `spec_helper.rb`, if you `require 'traitor/helpers/rspec'`, you can define
+traitor configurations at the block level using metadata. Simply define a metadata
+key with 'traitor_<config>: <value>', where config is one of the configurable values.

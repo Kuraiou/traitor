@@ -8,13 +8,14 @@ Gem::Specification.new do |s|
   s.homepage = 'https://github.com/kuraiou/traitor'
   s.license = 'MIT'
 
-  s.files = ['lib/traitor.rb', 'lib/traitor/config.rb', 'lib/traitor/error.rb', 'lib/traitor/find_definitions.rb']
+  s.files = ['lib/traitor.rb', 'lib/traitor/config.rb', 'lib/traitor/error.rb', 'lib/traitor/find_definitions.rb', 'lib/traitor/helpers/active_record.rb']
   s.require_path = 'lib'
 
   s.add_development_dependency 'bundler'
-  s.add_development_dependency 'rake'
-  s.add_development_dependency 'rspec'
-  s.add_development_dependency 'rspec-its'
+  s.add_development_dependency 'rspec',        '>= 3.0'
+  s.add_development_dependency 'rspec-its',    '>= 1.0'
   s.add_development_dependency 'timecop'
   s.add_development_dependency 'pry'
+  s.add_development_dependency 'sqlite3'
+  s.add_development_dependency 'activerecord', '>= 4.0.0'
 end

@@ -28,6 +28,7 @@ module Traitor
       end
 
       (traits.keys & BLOCK_KEYS).each do |block_type|
+        raise Traitor::Error.new("Callbacks are forbidden!") if Traitor::Config.no_callbacks
         block = traits.delete block_type
         @block_library[klass] ||= {class: {}, traits: {}}
         @block_library[klass][:class][block_type] = block
@@ -35,6 +36,7 @@ module Traitor
 
       traits.each do |trait, attributes|
         (attributes.keys & BLOCK_KEYS).each do |block_type|
+          raise Traitor::Error.new("Callbacks are forbidden!") if Traitor::Config.no_callbacks
           block = attributes.delete block_type
           @block_library[klass] ||= {class: {}, traits: {}}
           @block_library[klass][:traits][trait] ||= {}

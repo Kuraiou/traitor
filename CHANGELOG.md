@@ -3,6 +3,12 @@ v0.0.5
 
 * added the `:create_using` special argument for defining a Traitor.
 * refactored the code.
+* added `Traitor::Config.no_callbacks` to prevent people from defining callbacks.
+* added `Traitor::Helpers::ActiveRecord`, which defines a `create_without_callbacks`
+  extension to ActiveRecord that ignores all validations and callbacks by doing a
+  raw sql insert. See documentation for details.
+* added `Traitor::Helpers::RSpec` which can be used to define traitor rules in
+  metadata on RSpec groups.
 * updated documentation.
 
 v0.0.4

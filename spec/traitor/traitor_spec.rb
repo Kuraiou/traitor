@@ -1,11 +1,6 @@
 require 'spec_helper'
 
 RSpec.describe Traitor do
-  after do
-    # reset the Traitor class.
-    Traitor.reset!
-  end
-
   describe '#define' do
     it 'loads the content into the cache' do
       Traitor.define(:test_class, {})
@@ -26,6 +21,29 @@ RSpec.describe Traitor do
 
     it 'does not raise an error if the class does not exist' do
       expect{ Traitor.define(:foo_bar, {}) }.to_not raise_error
+    end
+  end
+
+  describe '#build', traitor_build_kwargs: {foo: 'bar'}  do
+    before { Traitor.define(:test_class, {}) }
+    let(:obj) { Traitor.build(:test_class, param1: :foo) }
+
+    context 'when build_with_lists is not set' do
+      it 'passes attributes as a hash, and build kwargs as kwargs' do
+        expect(obj).to have_attributes(
+          args: [{param1: :foo}],
+          kwargs: {foo: 'bar'}
+        )
+      end
+    end
+
+    context 'when build_with_lists is set', traitor_build_with_list: true do
+      it 'combines build kwargs and attributes' do
+        expect(obj).to have_attributes(
+          args: [],
+          kwargs: {param1: :foo, foo: 'bar'}
+        )
+      end
     end
   end
 
@@ -102,7 +120,6 @@ RSpec.describe Traitor do
     it 'will use the specified method, but keep the internal create_method' do
       expect_any_instance_of(TestClass).to receive(:create_two)
       Traitor.create_using(:test_class, :create_two)
-      expect(Traitor::Config.create_method).to eq :create
     end
   end
 
@@ -114,36 +131,48 @@ RSpec.describe Traitor do
       trait_create_called_at: nil,
     } }
 
-    before do
-      Traitor::Config.create_method = :create
-      Traitor.define(:test_class, {
-        trait1: {
+    context 'when callbacks are allowed' do
+      before do
+        Traitor::Config.create_method = :create
+        Traitor.define(:test_class, {
+          trait1: {
+            after_build: ->(record) do
+              tracker[:trait_build_called_at] = DateTime.now
+              sleep 0.001
+            end,
+            after_create: ->(record) do
+              tracker[:trait_create_called_at] = DateTime.now
+              sleep 0.001
+            end
+          },
           after_build: ->(record) do
-            tracker[:trait_build_called_at] = DateTime.now
+            tracker[:class_build_called_at] = DateTime.now
             sleep 0.001
           end,
           after_create: ->(record) do
-            tracker[:trait_create_called_at] = DateTime.now
+            tracker[:class_create_called_at] = DateTime.now
             sleep 0.001
           end
-        },
-        after_build: ->(record) do
-          tracker[:class_build_called_at] = DateTime.now
-          sleep 0.001
-        end,
-        after_create: ->(record) do
-          tracker[:class_create_called_at] = DateTime.now
-          sleep 0.001
-        end
-      })
+        })
+      end
+
+      it 'calls all blocks in least-to-most-specific order' do
+        Traitor.create(:test_class, :trait1)
+
+        expect(tracker[:trait_create_called_at]).to be > tracker[:class_create_called_at]
+        expect(tracker[:class_create_called_at]).to be > tracker[:trait_build_called_at]
+        expect(tracker[:trait_build_called_at]).to be > tracker[:class_build_called_at]
+      end
     end
 
-    it 'calls all blocks in least-to-most-specific order' do
-      Traitor.create(:test_class, :trait1)
+    context 'when Traitor::Config.no_callbacks is set', traitor_no_callbacks: true do
+      it 'raises an error if callbacks are configured in the definition' do
+        expect{Traitor.define(:test_class, {after_create: nil})}.to raise_error(Traitor::Error)
+      end
 
-      expect(tracker[:trait_create_called_at]).to be > tracker[:class_create_called_at]
-      expect(tracker[:class_create_called_at]).to be > tracker[:trait_build_called_at]
-      expect(tracker[:trait_build_called_at]).to be > tracker[:class_build_called_at]
+      it 'raises an error if callbacks are configured in the trait' do
+        expect{Traitor.define(:test_class, {trait: {after_create: nil}})}.to raise_error(Traitor::Error)
+      end
     end
   end
 end
