@@ -1,3 +1,23 @@
+Initializing Traitor
+--------------------
+
+**Note**: this document assumes you are using *Rspec* and Rails/ActiveRecord.
+
+In your `spec_helper.rb`, add:
+
+```ruby
+require 'traitor'
+Traitor.find_definitions # automatically load traitor definitions
+Traitor::Config.configure_for_rails! # set up for ActiveRecord
+```
+
+The above configuration method will build objects passing in `without_protection: true`, will
+save objects that are created with `create` by calling `object.save`, and will pass in
+`validate: false` to the save method.
+
+If you would prefer to keep validation intact, use `Traitor::Config.configure_safe_for_rails!`
+instead.
+
 Defining Traitors
 ------------------
 
@@ -21,14 +41,14 @@ Traitor.define :user,
 end
 ```
 
-**Note**: Default attribuets to be assigned must be underneath the `:default_traits` trait ey. This is a
+**Note**: Default attributes to be assigned must be underneath the `:default_traits` trait key. This is a
 special key that is always the first to be merged into the list of attributes.
 
 **Note**: Use lambdas without arguments (e.g. `->{ }`) to define a value that should be calculated at
 construction time instead of definition time.
 
-It is highly recommended that you have one traitor for each class that provides the simplest 
-set of attributes necessary to create an instance of that class. If you're creating ActiveRecord 
+It is highly recommended that you have one traitor for each class that provides the simplest
+set of attributes necessary to create an instance of that class. If you're creating ActiveRecord
 objects, that means that you should only provide attributes that are required through validations
 and that do not have defaults. Other traitors can be created through inheritance to cover common
 scenarios for each class.
@@ -47,7 +67,7 @@ following locations:
 Blocks/Triggers
 ---------------
 
-Similar to FactoryGirl, a trait can define triggers to occur after build or create, but before the 
+Similar to FactoryGirl, a trait can define triggers to occur after build or create, but before the
 record is handed off to the system. This is done by specifying a key of `:after_build` or
 `:after_create` in your traitor definition, whose value must be a callable `Proc` or `Lambda`, with
 a single parameter that represents the constructed object. `:after_build` occurs when both building
@@ -71,25 +91,28 @@ Traitor.define :user,
 
 Note that these build/create triggers are *not* put in the `:default_traits` key.
 
-Initializing Traitor
---------------------
+Special Keys on Definitions
+===========================
 
-**Note**: this document assumes you are using *Rspec* and Rails/ActiveRecord.
+* `:default_traits` -- this defines attributes that will *always* be loaded on an object.
+* `:after_build` -- this must have a value of a proc or lambda. That proc will be executed
+  after the object has been built, passing in the built object.
+* `:after_create` -- this must have a value of a proc or lambda. That proc will be executed
+  after the object has been built and saved with the `Traitor::Config.create_method`., passing
+  in the created object.
+* `:create_using` -- objects for this object will be created using the value defined here instead
+  of `Traitor::Config.create_method`
+* `:create_using_kwargs` -- must be a hash. the keyword arguments to be passed in via ** when
+  calling the `:create_using` method. ignored otherwise.
 
-In your `spec_helper.rb`, add:
+Special Keys On Traits
+======================
 
-```ruby
-require 'traitor'
-Traitor.find_definitions # automatically load traitor definitions
-Traitor::Config.configure_for_rails! # set up for ActiveRecord
-```
-
-The above configuration method will build objects passing in `without_protection: true`, will
-save objects that are created with `create` by calling `object.save`, and will pass in 
-`validate: false` to the save method.
-
-If you would prefer to keep validation intact, use `Traitor::Config.configure_safe_for_rails!`
-instead.
+* `:after_build` -- this must have a value of a proc or lambda. That proc will be executed
+  after the object has been built, passing in the built object.
+* `:after_create` -- this must have a value of a proc or lambda. That proc will be executed
+  after the object has been built and saved with the `Traitor::Config.create_method`., passing
+  in the created object.
 
 Using Traitors
 --------------
@@ -97,6 +120,9 @@ Using Traitors
 Simply use `Traitor.build` or `Traitor.create` to use your defined traitors. `build` will
 just construct the object; `create` will, after building the object, call the save method
 defined by `Traitor::Config.save_method` to save the object.
+
+you can also use `Traitor.create_using(klass, alternate_create_method)` to create an object
+using a different method just for that particular instance.
 
 It is highly recommended that you prefer `build` whenever possible to avoid unnecessary
 database usage.

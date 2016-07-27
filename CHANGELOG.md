@@ -1,3 +1,18 @@
+v0.0.5
+------
+
+* added the `:create_using` special argument for defining a Traitor.
+* refactored the code.
+* updated documentation.
+
+v0.0.4
+------
+
+* changed `Traitor::Config.save_method` and `Traitor::Config.save_kwargs` to
+  `Traitor::Config.create_method` and `Traitor::Config.create_kwargs` so all
+  language is consistent.
+* fixed a typo in the build kwarg `Traitor::Config.configure_for_rails!`
+
 v0.0.3
 ------
 
