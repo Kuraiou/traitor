@@ -8,7 +8,11 @@ Gem::Specification.new do |s|
   s.homepage = 'https://github.com/kuraiou/traitor'
   s.license = 'MIT'
 
-  s.files = ['lib/traitor.rb', 'lib/traitor/config.rb', 'lib/traitor/error.rb', 'lib/traitor/find_definitions.rb', 'lib/traitor/helpers/active_record.rb']
+  s.files = [
+    'lib/traitor.rb', 'lib/traitor/config.rb', 'lib/traitor/error.rb',
+    'lib/traitor/find_definitions.rb', 'lib/traitor/helpers/active_record.rb',
+    'lib/traitor/helpers/rspec.rb'
+  ]
   s.require_path = 'lib'
 
   s.add_development_dependency 'bundler'
