@@ -34,7 +34,7 @@ describe 'Active Record Extensions' do
       end
 
       it 'creates via insert' do
-        expect(stubbed_connection).to receive(:execute).with(insert_sql + ' RETURNING id')
+        expect(stubbed_connection).to receive(:execute).with(insert_sql + ' RETURNING *')
         object = Traitor.create(:test_active_record_class, param: :foo)
         expect(object.id).to eq 1
       end

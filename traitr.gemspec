@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'traitr'
-  s.version = '0.0.5'
+  s.version = '0.0.6'
   s.summary = 'a lightweight way to bind groups of attributes to a trait.'
   s.description = 'a lightweight, simplified, pure-ruby way to handle object model construction, similar to FactoryGirl.'
   s.authors = ['Zach Lome']

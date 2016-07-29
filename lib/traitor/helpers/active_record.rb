@@ -47,13 +47,19 @@ module Traitor
       end
 
       def create_without_callbacks_pg
+        # make sure we stub timestamps to avoid constraints, as those are typically "not null"
+        # handle both rails and ruby
+        time_method = Time.respond_to?(:current) ? Time.method(:current) : Time.method(:now)
+        self.created_at ||= time_method.call if self.respond_to?(:created_at)
+        self.updated_at ||= time_method.call if self.respond_to?(:updated_at)
+
         insert_sql = self.class.arel_table.create_insert.tap do |im|
           im.insert(self.send(:arel_attributes_with_values_for_create, self.attribute_names))
         end.to_sql
 
-        pk = self.class.primary_key
-        id = self.class.connection.execute(insert_sql + " RETURNING #{pk}")[0][pk]
-        self.send(:"#{pk}=", id)
+        # return and assign everything to gather values created/modified by db triggers
+        self.attributes = self.class.connection.execute(insert_sql + " RETURNING *")[0]
+        self.instance_variable_set(:@new_record, false)
         self.clear_changes_information
       end
     end
