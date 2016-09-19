@@ -43,6 +43,7 @@ module Traitor
         pk = self.class.primary_key
         id = conn.execute("SELECT last_insert_rowid() AS id")[0]['id']
         self.send(:"#{pk}=", id)
+        self.instance_variable_set(:@new_record, false)
         self.clear_changes_information
       end
 

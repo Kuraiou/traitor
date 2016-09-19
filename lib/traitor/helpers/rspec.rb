@@ -3,6 +3,7 @@ require 'rspec'
 module Traitor
   module Helpers
     class RSpec
+      # define the metadata keys to override traitor configs on a per-example basis.
       def self.configure!
         ::RSpec.configure do |config|
           config.around(:example) do |example|
