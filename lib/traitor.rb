@@ -51,7 +51,14 @@ module Traitor
     # build an instance of an object using the defined traits and attributes.
     ##
     def build(klass, *traits, **attributes)
-      attributes = get_attributes_from_traits(klass, traits).merge(attributes)
+      attrs, concat_attrs = split_attributes(attributes)
+      attributes = get_attributes_from_traits(klass, traits).merge(attrs)
+      # but add all the separate concatenated attributes into a list.
+      concat_attrs.each do |k, v|
+        attributes[k] ||= []
+        attributes[k] << v
+      end
+
       build_kwargs = Traitor::Config.build_kwargs || {}
 
       record = if Traitor::Config.build_with_list
@@ -124,23 +131,51 @@ module Traitor
 
       cache_key = klass.to_s + ':' + traits.join(':')
       @trait_cache[cache_key] ||= {}.tap do |attributes|
-        traits.each { |trait| attributes.merge!(library[trait] || {}) }
+        traits.each do |trait|
+          # pull out concatenating attributes into their own list
+          attrs, concat_attrs = split_attributes(library[trait] || {})
+
+          # raw merge in the standard attributes...
+          attributes.merge!(attrs)
+
+          # but add all the separate concatenated attributes into a list.
+          concat_attrs.each do |k, v|
+            attributes[k] ||= []
+            attributes[k] << v
+          end
+        end
       end
 
       # use late resolution on lambda values by calling them here as part of constructing a new hash
       Hash[
         @trait_cache[cache_key].map do |attribute, value|
-          [attribute, value.is_a?(Proc) && ![:after_build, :after_create].include?(attribute) ? value.call : value]
+          [attribute, calculate_value(value)]
         end
       ]
     end
 
+    def split_attributes(attributes)
+      attributes.reduce([{}, {}]) do |memo, attr_val|
+        attribute, value = attr_val
+        if attribute.to_s.start_with?('+')
+          memo[1][attribute[1..-1].to_sym] = value
+        else
+          memo[0][attribute] = value
+        end
+        memo
+      end
+    end
+
+    def calculate_value(v)
+      return v.call if v.is_a?(Proc)
+      return v.map { |sv| calculate_value(sv) } if v.is_a?(Array)
+      v
+    end
+
     def camelize(term)
-      string = term.to_s
-      string[0] = string[0].upcase
-      string.gsub!(/(?:_|(\/))([a-z\d]*)/i) { "#{$1}#{$2.capitalize}" }
-      string.gsub!('/'.freeze, '::'.freeze)
-      string
+      term.to_s.capitalize
+        .gsub(/(?:_|(\/))([a-z\d]*)/i) { "#{$1}#{$2.capitalize}" }
+        .gsub('/'.freeze, '::'.freeze)
     end
   end
 end

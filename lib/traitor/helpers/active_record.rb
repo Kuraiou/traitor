@@ -58,7 +58,16 @@ module Traitor
         end.to_sql
 
         # return and assign everything to gather values created/modified by db triggers
-        self.attributes = self.class.connection.execute(insert_sql + " RETURNING *")[0]
+        result = self.class.connection.execute(insert_sql + " RETURNING *")
+
+        # reassign the write values back to the object, in case there are DB triggers.
+        result.to_a.first.each do |column_name, serialized_value|
+          column = self.column_for_attribute(column_name)
+          deserialized_value = column.type_cast_from_database(serialized_value)
+          self["#{column_name}"] = deserialized_value
+        end
+
+        # mark the instance as having been saved.
         self.instance_variable_set(:@new_record, false)
         self.clear_changes_information
       end

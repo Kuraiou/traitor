@@ -114,6 +114,25 @@ RSpec.describe Traitor do
     end
   end
 
+  describe 'Concatenating Attributes' do
+    before do
+      Traitor.define(:test_class, {
+        trait1: {
+          '+param3' => :foo,
+        },
+        trait2: {
+          '+param3' => :bar,
+        }
+      })
+    end
+
+    let(:obj) { Traitor.build(:test_class, :trait1, :trait2, :'+param3' => :baz)}
+
+    it 'concatenates params' do
+      expect(obj.param3).to eq [:foo, :bar, :baz]
+    end
+  end
+
   describe '#create_using' do
     before { Traitor.define(:test_class, {}) } # assuming an empty
     before { Traitor::Config.create_method = :create }
