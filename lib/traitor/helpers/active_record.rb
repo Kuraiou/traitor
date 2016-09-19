@@ -29,6 +29,7 @@ module Traitor
         self.class.connection.execute(insert_sql)
         id = self.maximum(pk)
         self.send(:"#{pk}=", id)
+        self.instance_variable_set(:@new_record, false)
         self.clear_changes_information
       end
 
