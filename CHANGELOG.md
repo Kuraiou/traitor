@@ -1,3 +1,18 @@
+v0.0.7
+------
+* added the '+' special character for attributes; if used, it will treate that
+  attribute as a list, and concatenate the value to it. Note that attribute keys
+  must still by symbols; use `:'+ATTR' => VALUE` to define the attribute.
+* Minor refactoring.
+* In `Traitor::Helpers::ActiveRecord#create_without_callbacks`:
+  * Fixed an issue with the adapters not setting `@new_record` to false.
+  * When using the PG adapter, the code will automatically assign `created_at` and
+    `updated_at` if those attributes exist and are empty. This makes it much easier
+    to deal with timestamps on the object, which are highly recommended.
+  * When using the PG adapter, collect ALL values and assign them back, in case the
+    DB has its own hooks that modify the data.
+* Added code-level documentation.
+
 v0.0.5
 ------
 
